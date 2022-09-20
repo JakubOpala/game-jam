@@ -2,9 +2,16 @@ import pygame
 import qiskit
 import os
 import numpy as np
-import matplotlib
+#import matplotlib #.pyplot as plt
+from PIL import Image
 
-WIDTH, HEIGHT = 900,500
+#screen_info = pygame.display.Info()
+win_pos_x = 500 #screen_info.current_w / 2 - WIDTH / 2
+win_pos_y = 500 #screen_info.current_h / 2 - HEIGHT / 2
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (win_pos_x,win_pos_y)
+#os.environ['SDL_VIDEO_CENTERED'] = '1'
+
+WIDTH, HEIGHT = 1300,1000
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("sneyq")
 
@@ -26,7 +33,10 @@ qc.barrier()
 
 def draw_window():
     WIN.fill(WHITE)
-    WIN.blit(qc.qiskit.draw('mpl'), (0,300))
+    qc.draw('mpl', filename = os.path.join('images', 'circuit.png'))
+    circuit = pygame.image.load(
+        os.path.join('images', 'circuit.png'))
+    WIN.blit(circuit, (0,HEIGHT-circuit.get_height()))
     pygame.display.update() 
 
 def apply_gate(gate, wires):
