@@ -5,6 +5,7 @@ import os
 import numpy as np
 #import matplotlib #.pyplot as plt
 from PIL import Image
+import button
 
 pygame.init()
 
@@ -20,21 +21,25 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 FPS = 60
 
+#grid parameters
+ROWS = 100
+COLUMNS = 100
+TILE_SIZE = 40
+
 #loading images
 lava_img = pygame.image.load('images/lava.png')
-TILE_TYPES = 12
+tile1 = pygame.image.load('images/tiles/1.png')
+TILE_TYPES = 8
 img_list = []
-#for x in range(TILE_TYPES):
+for x in range(TILE_TYPES):
+    img = pygame.image.load('images/tiles/{x}.png')
+    img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+    img_list.append(img)
 
 
 #colours defining
 WHITE = (255, 255, 255)
 GREEN = (140, 190, 120)
-
-#grid parameters
-ROWS = 100
-COLUMNS = 100
-TILE_SIZE = 40
 
 #scrolling
 scroll_left = False
@@ -45,6 +50,21 @@ scroll_y = 0
 scroll_x = 0
 scroll_speed = 5
 
+#buttons
+current_tile = 0
+button_list = []
+button_col = 0
+button_row = 0
+for i in range(len(img_list)):
+    tile_button = button.Button(WIDTH + 50 * button_col + 50, 50 + 30 * button_row, img_list[i], 1)
+    button_list.apend(tile_button)
+    button_col += 1
+    if button_col == 3:       
+        button_row += 1
+        button_col = 0
+
+
+
 
 def draw_background():
     WIN.fill(GREEN)
@@ -53,6 +73,8 @@ def draw_background():
     for x in range(4):
         for y in range(4):
             WIN.blit(lava_img, ((x * bg_width) - scroll_x,(y * bg_height) - scroll_y))
+    for x in range(20):
+        WIN.blit(tile1, (0 - scroll_x,x * tile1.get_height() - scroll_y))
 
 def draw_grid():
     for c in range(ROWS+1):
@@ -66,7 +88,16 @@ clock = pygame.time.Clock()
 run = True
 
 while run:
+
     clock.tick(FPS)
+
+    #editing panel and buttons
+    pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT))
+    button_count = 0
+    for button_count, i in enumerate(button_list):
+        if i.draw(WIN):
+            current_tile = button_count
+
     if scroll_left == True and scroll_x>0:
         scroll_x -= 5
     if scroll_right == True:
