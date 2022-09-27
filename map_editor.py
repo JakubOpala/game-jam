@@ -1,3 +1,4 @@
+from curses import KEY_ENTER
 from lib2to3.pgen2.token import COLON
 import pygame
 import qiskit
@@ -6,6 +7,9 @@ import numpy as np
 #import matplotlib #.pyplot as plt
 from PIL import Image
 import button
+import csv
+import easygui
+
 
 pygame.init()
 
@@ -21,9 +25,17 @@ os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 FPS = 60
 
+#saving and loading
+map_name = 'new_map'
+save = 0
+load = 0
+level = 0
+font = pygame.font.SysFont('Futura', 30)
+font2 = pygame.font.SysFont('Futura', 20)
+
 #grid parameters
-ROWS = 100
-COLUMNS = 100
+ROWS = 50
+COLUMNS = 50
 TILE_SIZE = 40
 MAP_WIDTH = TILE_SIZE * COLUMNS
 MAP_HEIGHT = TILE_SIZE * ROWS
@@ -41,9 +53,15 @@ for x in range(TILE_TYPES):
 OBJECT_TYPES = 2   
 obj_list = []
 for x in range(OBJECT_TYPES):
-    obj = pygame.image.load(f'images/tiles/o{x}.png')
+    obj = pygame.image.load(f'images/objects/o{x}.png')
     obj = pygame.transform.scale(obj, (TILE_SIZE, TILE_SIZE))
     obj_list.append(obj)
+
+save_img = pygame.image.load('images/buttons/save.png')
+save_click_img = pygame.image.load('images/buttons/save_click.png')
+load_img = pygame.image.load('images/buttons/load.png')
+load_click_img = pygame.image.load('images/buttons/load_click.png')
+
 
 #colours defining
 WHITE = (255, 255, 255)
@@ -64,6 +82,9 @@ current_tile = 0
 button_list = []
 button_col = 0
 button_row = 0
+
+save_button = button.Button(WIDTH + (SIDE_MARGIN - save_img.get_width()) // 2, HEIGHT - 120, save_img, 1)
+load_button = button.Button(WIDTH + (SIDE_MARGIN - load_img.get_width()) // 2, HEIGHT - 60, load_img, 1)
 
 for i in range(len(img_list)):
     tile_button = button.Button(WIDTH + 60 * button_col + 20, 50 + 60 * button_row, img_list[i], 1)
@@ -95,6 +116,10 @@ for row in range(ROWS):
     r = [-1] * COLUMNS
     objects.append(r)
 
+#text on screen
+def draw_text(text, font, text_col, x, y ):
+    img = font.render(text, True, text_col)
+    WIN.blit(img, (x, y))
 
 
 def draw_background():
@@ -121,12 +146,47 @@ def draw_map():
             if tile >= 0:
                 WIN.blit(obj_list[tile-TILE_TYPES], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y))
 
+
 clock = pygame.time.Clock()
 run = True
 
 while run:
 
     clock.tick(FPS)
+
+    draw_background()
+    draw_grid()
+    draw_map()
+
+    #margins for editing panel
+    pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
+    pygame.draw.rect(WIN, GREEN, (0,HEIGHT, WIDTH, LOWER_MARGIN))
+
+    draw_text(f'Level: {level}', font, WHITE, 10, HEIGHT + 10)
+
+    #drawing buttons
+    button_count = 0
+    for button_count, i in enumerate(button_list):
+        if i.draw(WIN):
+            current_tile = button_count
+    pygame.draw.rect(WIN, RED, button_list[current_tile], 3)
+    #save and load map
+    if save_button.draw(WIN):
+        save = 1
+        pygame.draw.rect(WIN, RED, save_button, 3)
+
+    if load_button.draw(WIN):
+        load = 1
+        pygame.draw.rect(WIN, RED, load_button, 3)
+    
+    
+                 
+    
+    load_button.draw(WIN)
+
+    #pygame.display.update()
+
+    #end of drawing
 
 
     if scroll_left == True and scroll_x>0:
@@ -143,7 +203,8 @@ while run:
     x = (pos[0] + scroll_x) // TILE_SIZE
     y = (pos[1] + scroll_y) // TILE_SIZE
 
-    if pos[0] < WIDTH and pos[1] < HEIGHT:
+    #drawing tiles/objects on map
+    if pos[0] < WIDTH and x < COLUMNS and pos[1] < HEIGHT and y < ROWS:
         if pygame.mouse.get_pressed()[0] == 1:
             if current_tile <= 5:
                 if tiles[y][x] != current_tile:
@@ -152,7 +213,29 @@ while run:
                 if objects[y][x] != current_tile:
                     objects[y][x] = current_tile
 
+    #scrolling
     for event in pygame.event.get():
+        if save == 1:
+            #pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))       
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    if len(map_name) > 0:
+                        map_name = map_name[:-1]
+                elif event.key == pygame.K_RETURN and len(map_name) > 0:
+                    save = 0
+                    with open(os.path.join('maps', map_name) + '.csv', 'w', newline='') as csvfile:
+                        writer = csv.writer(csvfile, delimiter = ';')
+                        for row in tiles:
+                            writer.writerow(row)
+                        for row in objects:
+                            writer.writerow(row)
+                    #with open(map_name + '_objects.csv', 'w', newline='') as csvfile2:
+                    #    writer = csv.writer(csvfile2, delimiter = ',')
+                    #    for row in objects:
+                    #        writer.writerow(row)
+                else:
+                    map_name = map_name + pygame.key.name(event.key)  #+= event.unicode
+            #draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)    
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
@@ -173,24 +256,29 @@ while run:
                 scroll_up = False
             if event.key == pygame.K_DOWN:
                 scroll_down = False
+    
+    #saving map
+    if save == 1:
+        pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))
+        draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)   
 
-    draw_background()
-    draw_grid()
-
-    #editing panel and buttons
-    pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
-    pygame.draw.rect(WIN, GREEN, (0,HEIGHT, WIDTH, LOWER_MARGIN))
-    button_count = 0
-    for button_count, i in enumerate(button_list):
-        if i.draw(WIN):
-            current_tile = button_count
-    pygame.draw.rect(WIN, RED, button_list[current_tile], 3)
-
-    draw_map()
-
-    pygame.display.update()
-
+    if load == 1:
+        scroll_x = 0
+        scroll_y = 0
+        path = os.path.join('maps')
+        file = easygui.fileopenbox()    
+        with open(os.path.join('maps', file), 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter = ';')   
+            for x, row in enumerate(reader):
+                for y, tile in enumerate(row):
+                    if x < ROWS:
+                        tiles[x][y] = int(tile)
+                    else:
+                        objects[x-COLUMNS][y-ROWS] = int(tile)
         
 
+        load = 0
+
+    pygame.display.update()        
         
 pygame.quit()
