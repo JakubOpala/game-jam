@@ -36,7 +36,7 @@ font2 = pygame.font.SysFont('Futura', 20)
 #grid parameters
 ROWS = 50
 COLUMNS = 50
-TILE_SIZE = 40
+TILE_SIZE = 32
 MAP_WIDTH = TILE_SIZE * COLUMNS
 MAP_HEIGHT = TILE_SIZE * ROWS
 

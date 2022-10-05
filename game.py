@@ -99,7 +99,7 @@ def draw_window():
     circuit = pygame.image.load(
         os.path.join('images', 'circuit.png'))
     WIN.blit(circuit, (0,HEIGHT-circuit.get_height()))
-    #WIN.blit(hero_image)
+    #WIN.blit(hero_image)   
 
 def draw_background():
     WIN.fill(GREEN)
