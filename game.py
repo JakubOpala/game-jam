@@ -7,20 +7,22 @@ from PIL import Image
 import easygui
 import csv
 
+from sympy import Abs
+
 from map_editor import COLUMNS, ROWS
 
 pygame.init()
 
-#initializing window
-win_pos_x = 500 #screen_info.current_w / 2 - WIDTH / 2
-win_pos_y = 500 #screen_info.current_h / 2 - HEIGHT / 2
-#os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (win_pos_x,win_pos_y)
-os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 WIDTH, HEIGHT = 1040,700
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("sneyq")
 
+#initializing window
+#win_pos_x = 500 #screen_info.current_w / 2 - WIDTH / 2
+#win_pos_y = 500 #screen_info.current_h / 2 - HEIGHT / 2
+#os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (win_pos_x,win_pos_y)
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 
 WHITE = (255, 255, 255)
 GREEN = (160, 180, 100)
@@ -29,29 +31,9 @@ FPS = 60
 scroll_x = 0
 scroll_y = 0
 
-
-#hero parameters
-hero_width = 30
-hero_height = 30
-x_cord = 200
-y_cord = 200
-vel = 5
-
-#loading images
-hero_img = pygame.image.load('images/hero.png')
-lava_img = pygame.image.load('images/lava.png')
-
-
-#initial circuit
-NUM_WIRES = 2
-qc = qiskit.QuantumCircuit(NUM_WIRES, NUM_WIRES)
-qc.x(range(NUM_WIRES // 2))
-qc.h(range(NUM_WIRES))
-qc.barrier()
-
 COLUMNS = 50
 ROWS = 50
-TILE_SIZE = 40
+TILE_SIZE = 32
 
 
 TILE_TYPES = 6
@@ -78,36 +60,64 @@ for row in range(ROWS):
     r = [-1] * COLUMNS
     objects.append(r)
 
+#loading images
+hero_down = pygame.image.load('images/hero/hero_down.png')
+hero_right = pygame.image.load('images/hero/hero_right.png')
+hero_left = pygame.image.load('images/hero/hero_left.png')
+hero_up = pygame.image.load('images/hero/hero_up.png')
+bgd_img = pygame.image.load('images/space.png')
+
+#hero
+class character:
+    def __init__(self,x, y, height, width, vel, image):
+        self.width = width
+        self.height = height
+        self.x = x
+        self.y = y
+        self.vel = 5
+        self.img = image
+
+hero = character(5, 15, 2, 1, 5, hero_down)
+
+#initial circuit
+NUM_WIRES = 2
+qc = qiskit.QuantumCircuit(NUM_WIRES, NUM_WIRES)
+qc.x(range(NUM_WIRES // 2))
+qc.h(range(NUM_WIRES))
+qc.barrier()
+
+
+
 def load_map():
     scroll_x = 0
     scroll_y = 0
     path = os.path.join('maps')
-    file = 'new_map1.csv' #easygui.fileopenbox()    
+    file = 'testowa.csv' #easygui.fileopenbox()    
     with open(os.path.join('maps', file), 'r', newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter = ';')   
-        for x, row in enumerate(reader):
-            for y, tile in enumerate(row):
-                if x < ROWS:
-                    tiles[x][y] = int(tile)
+        for y, row in enumerate(reader):
+            for x, tile in enumerate(row):
+                if y < ROWS:
+                    tiles[y][x] = int(tile)
                 else:
-                    objects[x-COLUMNS][y-ROWS] = int(tile)
+                    objects[y-ROWS][x] = int(tile)
 
 #drawing game
-def draw_window():
-    WIN.fill(WHITE)
-    qc.draw('mpl', filename = os.path.join('images', 'circuit.png'))
-    circuit = pygame.image.load(
-        os.path.join('images', 'circuit.png'))
-    WIN.blit(circuit, (0,HEIGHT-circuit.get_height()))
+#def draw_window():
+    #WIN.fill(WHITE)
+    #qc.draw('mpl', filename = os.path.join('images', 'circuit.png'))
+    #circuit = pygame.image.load(
+    #    os.path.join('images', 'circuit.png'))
+    #WIN.blit(circuit, (0,HEIGHT-circuit.get_height()))
     #WIN.blit(hero_image)   
 
 def draw_background():
     WIN.fill(GREEN)
-    bg_width = lava_img.get_width()
-    bg_height = lava_img.get_height()
+    bg_width = bgd_img.get_width()
+    bg_height = bgd_img.get_height()
     for x in range(4):
         for y in range(4):
-            WIN.blit(lava_img, ((x * bg_width) - scroll_x,(y * bg_height) - scroll_y))
+            WIN.blit(bgd_img, ((x * bg_width) - scroll_x,(y * bg_height) - scroll_y))
 
 def draw_map():
     for i, row in enumerate(tiles):
@@ -142,15 +152,23 @@ def apply_gate(gate, wires):
 
 
 #handling hero's movement
-def hero_move(keys_pressed):
-    if keys_pressed[pygame.K_LEFT] and x_cord > 0 and objects[x_cord // TILE_SIZE - 1, y_cord // TILE_SIZE] == -1: # move in left
-        x_cord -= vel
-    if keys_pressed[pygame.K_RIGHT] and x_cord + hero_width < TILE_SIZE * COLUMNS and objects[(x_cord+hero_width) // TILE_SIZE + 1, y_cord // TILE_SIZE] == -1: # move in right
-        x_cord += vel
-    if keys_pressed[pygame.K_UP] and y_cord > 0 and objects[x_cord // TILE_SIZE, y_cord // TILE_SIZE - 1] == -1: # move up
-        y_cord -= vel
-    if keys_pressed[pygame.K_DOWN] and y_cord + hero_height < TILE_SIZE * ROWS and objects[x_cord // TILE_SIZE, (y_cord+hero_height) // TILE_SIZE + 1] == -1: # move down
-        y_cord += vel
+def hero_move(keys_pressed, hero):
+    if keys_pressed[pygame.K_LEFT] and hero.x > 0:
+        if objects[hero.y + 1][hero.x - 1] == -1: # move in left
+            hero.x -= 1 #hero.vel
+            hero.img = hero_left
+    if keys_pressed[pygame.K_RIGHT] and (hero.x + hero.width < COLUMNS -1):
+        if objects[hero.y + 1][hero.x + hero.width] == -1: # move in right
+            hero.x += 1 #hero.vel
+            hero.img = hero_right
+    if keys_pressed[pygame.K_UP] and (hero.y > 0):
+        if (objects[hero.y][hero.x] == -1): # move up
+            hero.y -= 1 #hero.vel
+            hero.img = hero_up
+    if keys_pressed[pygame.K_DOWN] and (hero.y + hero.height < ROWS - 1):
+        if (objects[hero.y + hero.height][hero.x] == -1): # move down
+            hero.y += 1 #hero.vel
+            hero.img = hero_down
 
 
 def main():
@@ -158,22 +176,25 @@ def main():
     load_map()
 
     clock = pygame.time.Clock()
+    time = 0
     run = True
 
     while run:
         clock.tick(FPS)
+        time = (time + 1) % FPS
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
 
         keys_pressed = pygame.key.get_pressed()
-        hero_move(keys_pressed)
+        if time % 10 == 0:
+            hero_move(keys_pressed, hero)
         
 
-        draw_window()
+        #draw_window()
         draw_background()
         draw_map()
-        WIN.blit(hero_img, (x_cord, y_cord))
+        WIN.blit(hero.img, (hero.x * TILE_SIZE, hero.y * TILE_SIZE))
 
         pygame.display.update()
 

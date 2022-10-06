@@ -41,7 +41,7 @@ MAP_WIDTH = TILE_SIZE * COLUMNS
 MAP_HEIGHT = TILE_SIZE * ROWS
 
 #loading images
-lava_img = pygame.image.load('images/lava.png')
+lava_img = pygame.image.load('images/space.png')
 
 TILE_TYPES = 6
 img_list = []
@@ -146,139 +146,140 @@ def draw_map():
             if tile >= 0:
                 WIN.blit(obj_list[tile-TILE_TYPES], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y))
 
+if __name__ == "__main__":
+    clock = pygame.time.Clock()
+    run = True
 
-clock = pygame.time.Clock()
-run = True
+    while run:
 
-while run:
+        clock.tick(FPS)
 
-    clock.tick(FPS)
+        draw_background()
+        draw_grid()
+        draw_map()
 
-    draw_background()
-    draw_grid()
-    draw_map()
+        #margins for editing panel
+        pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
+        pygame.draw.rect(WIN, GREEN, (0,HEIGHT, WIDTH, LOWER_MARGIN))
 
-    #margins for editing panel
-    pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
-    pygame.draw.rect(WIN, GREEN, (0,HEIGHT, WIDTH, LOWER_MARGIN))
+        draw_text(f'Level: {level}', font, WHITE, 10, HEIGHT + 10)
 
-    draw_text(f'Level: {level}', font, WHITE, 10, HEIGHT + 10)
+        #drawing buttons
+        button_count = 0
+        for button_count, i in enumerate(button_list):
+            if i.draw(WIN):
+                current_tile = button_count
+        pygame.draw.rect(WIN, RED, button_list[current_tile], 3)
+        #save and load map
+        if save_button.draw(WIN):
+            save = 1
+            pygame.draw.rect(WIN, RED, save_button, 3)
 
-    #drawing buttons
-    button_count = 0
-    for button_count, i in enumerate(button_list):
-        if i.draw(WIN):
-            current_tile = button_count
-    pygame.draw.rect(WIN, RED, button_list[current_tile], 3)
-    #save and load map
-    if save_button.draw(WIN):
-        save = 1
-        pygame.draw.rect(WIN, RED, save_button, 3)
+        if load_button.draw(WIN):
+            load = 1
+            pygame.draw.rect(WIN, RED, load_button, 3)
+        
+        
+                    
+        
+        load_button.draw(WIN)
 
-    if load_button.draw(WIN):
-        load = 1
-        pygame.draw.rect(WIN, RED, load_button, 3)
-    
-    
-                 
-    
-    load_button.draw(WIN)
+        #pygame.display.update()
 
-    #pygame.display.update()
-
-    #end of drawing
+        #end of drawing
 
 
-    if scroll_left == True and scroll_x>0:
-        scroll_x -= 5
-    if scroll_right == True and scroll_x<(MAP_WIDTH - WIDTH):
-        scroll_x += 5
-    if scroll_up == True and scroll_y>0:
-        scroll_y -= 5
-    if scroll_down == True and scroll_y<(MAP_HEIGHT - HEIGHT):
-        scroll_y += 5
+        if scroll_left == True and scroll_x>0:
+            scroll_x -= 5
+        if scroll_right == True and scroll_x<(MAP_WIDTH - WIDTH):
+            scroll_x += 5
+        if scroll_up == True and scroll_y>0:
+            scroll_y -= 5
+        if scroll_down == True and scroll_y<(MAP_HEIGHT - HEIGHT):
+            scroll_y += 5
 
-    #gettin mouse position
-    pos = pygame.mouse.get_pos()    
-    x = (pos[0] + scroll_x) // TILE_SIZE
-    y = (pos[1] + scroll_y) // TILE_SIZE
+        #gettin mouse position
+        pos = pygame.mouse.get_pos()    
+        x = (pos[0] + scroll_x) // TILE_SIZE
+        y = (pos[1] + scroll_y) // TILE_SIZE
 
-    #drawing tiles/objects on map
-    if pos[0] < WIDTH and x < COLUMNS and pos[1] < HEIGHT and y < ROWS:
-        if pygame.mouse.get_pressed()[0] == 1:
-            if current_tile <= 5:
-                if tiles[y][x] != current_tile:
-                    tiles[y][x] = current_tile
-            else:
-                if objects[y][x] != current_tile:
-                    objects[y][x] = current_tile
-
-    #scrolling
-    for event in pygame.event.get():
-        if save == 1:
-            #pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))       
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
-                    if len(map_name) > 0:
-                        map_name = map_name[:-1]
-                elif event.key == pygame.K_RETURN and len(map_name) > 0:
-                    save = 0
-                    with open(os.path.join('maps', map_name) + '.csv', 'w', newline='') as csvfile:
-                        writer = csv.writer(csvfile, delimiter = ';')
-                        for row in tiles:
-                            writer.writerow(row)
-                        for row in objects:
-                            writer.writerow(row)
-                    #with open(map_name + '_objects.csv', 'w', newline='') as csvfile2:
-                    #    writer = csv.writer(csvfile2, delimiter = ',')
-                    #    for row in objects:
-                    #        writer.writerow(row)
+        #drawing tiles/objects on map
+        if pos[0] < WIDTH and x < COLUMNS and pos[1] < HEIGHT and y < ROWS:
+            if pygame.mouse.get_pressed()[0] == 1:
+                if current_tile <= 5:
+                    if tiles[y][x] != current_tile:
+                        tiles[y][x] = current_tile
                 else:
-                    map_name = map_name + pygame.key.name(event.key)  #+= event.unicode
-            #draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)    
-        if event.type == pygame.QUIT:
-            run = False
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                scroll_left = True
-            if event.key == pygame.K_RIGHT:
-                scroll_right = True
-            if event.key == pygame.K_UP:
-                scroll_up = True
-            if event.key == pygame.K_DOWN:
-                scroll_down = True
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT:
-                scroll_left = False
-            if event.key == pygame.K_RIGHT:
-                scroll_right = False
-            if event.key == pygame.K_UP:
-                scroll_up = False
-            if event.key == pygame.K_DOWN:
-                scroll_down = False
-    
-    #saving map
-    if save == 1:
-        pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))
-        draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)   
+                    if objects[y][x] != current_tile:
+                        objects[y][x] = current_tile
 
-    if load == 1:
-        scroll_x = 0
-        scroll_y = 0
-        path = os.path.join('maps')
-        file = easygui.fileopenbox()    
-        with open(os.path.join('maps', file), 'r', newline='') as csvfile:
-            reader = csv.reader(csvfile, delimiter = ';')   
-            for x, row in enumerate(reader):
-                for y, tile in enumerate(row):
-                    if x < ROWS:
-                        tiles[x][y] = int(tile)
+        #scrolling
+        for event in pygame.event.get():
+            if save == 1:
+                #pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))       
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        if len(map_name) > 0:
+                            map_name = map_name[:-1]
+                    elif event.key == pygame.K_RETURN and len(map_name) > 0:
+                        save = 0
+                        with open(os.path.join('maps', map_name) + '.csv', 'w', newline='') as csvfile:
+                            writer = csv.writer(csvfile, delimiter = ';')
+                            for row in tiles:
+                                writer.writerow(row)
+                            for row in objects:
+                                writer.writerow(row)
+                        #with open(map_name + '_objects.csv', 'w', newline='') as csvfile2:
+                        #    writer = csv.writer(csvfile2, delimiter = ',')
+                        #    for row in objects:
+                        #        writer.writerow(row)
                     else:
-                        objects[x-COLUMNS][y-ROWS] = int(tile)
+                        map_name = map_name + pygame.key.name(event.key)  #+= event.unicode
+                #draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)    
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    scroll_left = True
+                if event.key == pygame.K_RIGHT:
+                    scroll_right = True
+                if event.key == pygame.K_UP:
+                    scroll_up = True
+                if event.key == pygame.K_DOWN:
+                    scroll_down = True
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    scroll_left = False
+                if event.key == pygame.K_RIGHT:
+                    scroll_right = False
+                if event.key == pygame.K_UP:
+                    scroll_up = False
+                if event.key == pygame.K_DOWN:
+                    scroll_down = False
         
+        #saving map
+        if save == 1:
+            pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))
+            draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)   
 
-        load = 0
+        if load == 1:
+            scroll_x = 0
+            scroll_y = 0
+            path = os.path.join('maps')
+            file = easygui.fileopenbox()    
+            with open(os.path.join('maps', file), 'r', newline='') as csvfile:
+                reader = csv.reader(csvfile, delimiter = ';')   
+                for x, row in enumerate(reader):
+                    for y, tile in enumerate(row):
+                        if x < ROWS:
+                            tiles[x][y] = int(tile)
+                        else:
+                            objects[x-COLUMNS][y-ROWS] = int(tile)
+            
 
-    pygame.display.update()        
-        
-pygame.quit()
+            load = 0
+
+        pygame.display.update()        
+            
+    pygame.quit()
+
