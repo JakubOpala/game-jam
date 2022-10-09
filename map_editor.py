@@ -13,9 +13,9 @@ import easygui
 
 pygame.init()
 
-WIDTH, HEIGHT = 840, 600
-SIDE_MARGIN, LOWER_MARGIN = 200, 100
-WIN = pygame.display.set_mode((WIDTH+SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
+WIDTH, HEIGHT = 832, 608
+SIDE_MARGIN, UPPER_MARGIN, LOWER_MARGIN = 200, 32, 100
+WIN = pygame.display.set_mode((WIDTH+SIDE_MARGIN, HEIGHT+UPPER_MARGIN+LOWER_MARGIN))
 pygame.display.set_caption("Map editor")
 
 win_pos_x = 500 #screen_info.current_w / 2 - WIDTH / 2
@@ -41,7 +41,7 @@ MAP_WIDTH = TILE_SIZE * COLUMNS
 MAP_HEIGHT = TILE_SIZE * ROWS
 
 #loading images
-lava_img = pygame.image.load('images/space.png')
+space_img = pygame.image.load('images/space.png')
 
 TILE_TYPES = 6
 img_list = []
@@ -67,6 +67,8 @@ load_click_img = pygame.image.load('images/buttons/load_click.png')
 WHITE = (255, 255, 255)
 GREEN = (140, 190, 120)
 RED = (220, 25, 25)
+GOLD = (240, 200, 20)
+BEIGE = (235, 235, 200)
 
 #scrolling
 scroll_left = False
@@ -85,6 +87,7 @@ button_row = 0
 
 save_button = button.Button(WIDTH + (SIDE_MARGIN - save_img.get_width()) // 2, HEIGHT - 120, save_img, 1)
 load_button = button.Button(WIDTH + (SIDE_MARGIN - load_img.get_width()) // 2, HEIGHT - 60, load_img, 1)
+#new_button = button.Button(WIDTH + (SIDE_MARGIN - load_img.get_width()) // 2, HEIGHT - 60, new_img, 1)
 
 for i in range(len(img_list)):
     tile_button = button.Button(WIDTH + 60 * button_col + 20, 50 + 60 * button_row, img_list[i], 1)
@@ -123,34 +126,37 @@ def draw_text(text, font, text_col, x, y ):
 
 
 def draw_background():
-    WIN.fill(GREEN)
-    bg_width = lava_img.get_width()
-    bg_height = lava_img.get_height()
+    WIN.fill(BEIGE)
+    bg_width = space_img.get_width()
+    bg_height = space_img.get_height()
     for x in range(4):
         for y in range(4):
-            WIN.blit(lava_img, ((x * bg_width) - scroll_x,(y * bg_height) - scroll_y))
+            WIN.blit(space_img, ((x * bg_width) - scroll_x,(y * bg_height) - scroll_y + UPPER_MARGIN))
 
 def draw_grid():
     for c in range(ROWS+1):
-        pygame.draw.line(WIN, WHITE, (0, c * TILE_SIZE - scroll_y), (WIDTH + SIDE_MARGIN, c * TILE_SIZE - scroll_y))
+        pygame.draw.line(WIN, WHITE, (0, c * TILE_SIZE - scroll_y + UPPER_MARGIN), (WIDTH + SIDE_MARGIN, c * TILE_SIZE - scroll_y + UPPER_MARGIN))
     for c in range(COLUMNS+1):
-        pygame.draw.line(WIN, WHITE, (c * TILE_SIZE - scroll_x, 0), (c * TILE_SIZE - scroll_x, HEIGHT + LOWER_MARGIN))
+        pygame.draw.line(WIN, WHITE, (c * TILE_SIZE - scroll_x, UPPER_MARGIN), (c * TILE_SIZE - scroll_x, HEIGHT + LOWER_MARGIN))
 
 def draw_map():
     for i, row in enumerate(tiles):
         for j, tile in enumerate(row):
             if tile >= 0:
-                WIN.blit(img_list[tile], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y))
+                WIN.blit(img_list[tile], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y + UPPER_MARGIN))
     for i, row2 in enumerate(objects):
         for j, tile in enumerate(row2):
             if tile >= 0:
-                WIN.blit(obj_list[tile-TILE_TYPES], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y))
+                WIN.blit(obj_list[tile-TILE_TYPES], (j * TILE_SIZE - scroll_x, i * TILE_SIZE - scroll_y + UPPER_MARGIN))
 
 if __name__ == "__main__":
     clock = pygame.time.Clock()
     run = True
+    #pygame.draw.rect(WIN, BEIGE, (0, 0), WIDTH + SIDE_MARGIN, HEIGHT + LOWER_MARGIN)
+    #draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)
 
     while run:
+
 
         clock.tick(FPS)
 
@@ -158,9 +164,14 @@ if __name__ == "__main__":
         draw_grid()
         draw_map()
 
-        #margins for editing panel
-        pygame.draw.rect(WIN, GREEN, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN))
-        pygame.draw.rect(WIN, GREEN, (0,HEIGHT, WIDTH, LOWER_MARGIN))
+        #margins for editing panel etc
+        pygame.draw.rect(WIN, GOLD, (0,0, WIDTH, UPPER_MARGIN))
+        pygame.draw.rect(WIN, BEIGE, (3, 3, WIDTH - 3, UPPER_MARGIN - 6))
+        pygame.draw.rect(WIN, GOLD, (0,HEIGHT + UPPER_MARGIN, WIDTH, LOWER_MARGIN + UPPER_MARGIN))
+        pygame.draw.rect(WIN, BEIGE, (3,HEIGHT + 3 + UPPER_MARGIN, WIDTH - 3, LOWER_MARGIN - 6))
+        pygame.draw.rect(WIN, GOLD, (WIDTH,0, SIDE_MARGIN, HEIGHT+LOWER_MARGIN + UPPER_MARGIN))
+        pygame.draw.rect(WIN, BEIGE, (WIDTH + 3, 3 , SIDE_MARGIN - 6, HEIGHT+LOWER_MARGIN - 6 + UPPER_MARGIN))
+        
 
         draw_text(f'Level: {level}', font, WHITE, 10, HEIGHT + 10)
 
@@ -178,9 +189,7 @@ if __name__ == "__main__":
         if load_button.draw(WIN):
             load = 1
             pygame.draw.rect(WIN, RED, load_button, 3)
-        
-        
-                    
+                            
         
         load_button.draw(WIN)
 
@@ -201,10 +210,10 @@ if __name__ == "__main__":
         #gettin mouse position
         pos = pygame.mouse.get_pos()    
         x = (pos[0] + scroll_x) // TILE_SIZE
-        y = (pos[1] + scroll_y) // TILE_SIZE
+        y = (pos[1] + scroll_y - UPPER_MARGIN) // TILE_SIZE
 
         #drawing tiles/objects on map
-        if pos[0] < WIDTH and x < COLUMNS and pos[1] < HEIGHT and y < ROWS:
+        if pos[0] < WIDTH and x < COLUMNS and pos[1] < HEIGHT + UPPER_MARGIN and pos[1] > UPPER_MARGIN and y < ROWS:
             if pygame.mouse.get_pressed()[0] == 1:
                 if current_tile <= 5:
                     if tiles[y][x] != current_tile:
@@ -225,6 +234,7 @@ if __name__ == "__main__":
                         save = 0
                         with open(os.path.join('maps', map_name) + '.csv', 'w', newline='') as csvfile:
                             writer = csv.writer(csvfile, delimiter = ';')
+                            writer.writerow([COLUMNS, ROWS])
                             for row in tiles:
                                 writer.writerow(row)
                             for row in objects:
@@ -259,10 +269,13 @@ if __name__ == "__main__":
         
         #saving map
         if save == 1:
-            pygame.draw.rect(WIN, GREEN, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))
-            draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)   
+            pygame.draw.rect(WIN, GOLD, ((WIDTH + SIDE_MARGIN) // 2 - 100 - 3, (HEIGHT + LOWER_MARGIN) // 2 - 50 -3, 206, 106))
+            pygame.draw.rect(WIN, BEIGE, ((WIDTH + SIDE_MARGIN) // 2 - 100, (HEIGHT + LOWER_MARGIN) // 2 - 50, 200, 100))
+            draw_text(map_name, font2, WHITE, (WIDTH + SIDE_MARGIN) // 2 - 80, (HEIGHT + LOWER_MARGIN) // 2 - 40)
+
 
         if load == 1:
+            #WIN.blit(load_click_img, WIDTH + (SIDE_MARGIN - save_img.get_width()) // 2, HEIGHT - 120,)
             scroll_x = 0
             scroll_y = 0
             path = os.path.join('maps')
