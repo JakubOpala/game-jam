@@ -68,14 +68,14 @@ hero_down = pygame.transform.scale(pygame.image.load('images/hero/hero_down.png'
 hero_down1 = pygame.transform.scale(pygame.image.load('images/hero/hero_down1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
 hero_down2 = pygame.transform.scale(pygame.image.load('images/hero/hero_down2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
 hero_right = pygame.transform.scale(pygame.image.load('images/hero/hero_right.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-#hero_right1 = pygame.transform.scale(pygame.image.load('images/hero/hero_right1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-#hero_right2 = pygame.transform.scale(pygame.image.load('images/hero/hero_right2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_right1 = pygame.transform.scale(pygame.image.load('images/hero/hero_right1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_right2 = pygame.transform.scale(pygame.image.load('images/hero/hero_right2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
 hero_left = pygame.transform.scale(pygame.image.load('images/hero/hero_left.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-#hero_left1 = pygame.transform.scale(pygame.image.load('images/hero/hero_down.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-#hero_left2 = pygame.transform.scale(pygame.image.load('images/hero/hero_down.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_left1 = pygame.transform.scale(pygame.image.load('images/hero/hero_left1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_left2 = pygame.transform.scale(pygame.image.load('images/hero/hero_left2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
 hero_up = pygame.transform.scale(pygame.image.load('images/hero/hero_up.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-# hero_up1 = pygame.transform.scale(pygame.image.load('images/hero/hero_up1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
-# hero_up2 = pygame.transform.scale(pygame.image.load('images/hero/hero_up2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_up1 = pygame.transform.scale(pygame.image.load('images/hero/hero_up1.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
+hero_up2 = pygame.transform.scale(pygame.image.load('images/hero/hero_up2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE * 2))
 bgd_img = pygame.image.load('images/space.png').convert_alpha()
 
 #hero
@@ -173,16 +173,46 @@ def apply_gate(gate, wires):
 #handling hero's movement
 def hero_move(keys_pressed, hero):
     if keys_pressed[pygame.K_LEFT] and hero.x > 0 and objects[hero.y + 1][hero.x - 1] == -1: # move in left
-            hero.x -= 1 #hero.vel
-            hero.img = hero_left
+            if hero.movex == 0:
+                if hero.step == 'left':
+                    hero.img = hero_left1
+                    hero.step = 'right'
+                else:
+                    hero.img = hero_left2
+                    hero.step = 'left'
+                hero.movex = -1
+            else:
+                hero.movex = 0
+                hero.x -= 1
+                hero.img = hero_left
             return True
     if keys_pressed[pygame.K_RIGHT] and (hero.x + hero.width < COLUMNS -1) and objects[hero.y + 1][hero.x + hero.width] == -1: # move in right
-            hero.x += 1 #hero.vel
-            hero.img = hero_right
+            if hero.movex == 0:
+                if hero.step == 'left':
+                    hero.img = hero_right1
+                    hero.step = 'right'
+                else:
+                    hero.img = hero_right2
+                    hero.step = 'left'
+                hero.movex = 1
+            else:
+                hero.movex = 0
+                hero.x += 1
+                hero.img = hero_right
             return True
     if keys_pressed[pygame.K_UP] and (hero.y > 0) and (objects[hero.y][hero.x] == -1): # move up
-            hero.y -= 1 #hero.vel
-            hero.img = hero_up
+            if hero.movey == 0:
+                if hero.step == 'left':
+                    hero.img = hero_up1
+                    hero.step = 'right'
+                else:
+                    hero.img = hero_up2
+                    hero.step = 'left'
+                hero.movey = -1
+            else:
+                hero.movey = 0
+                hero.y -= 1
+                hero.img = hero_down
             return True
     if keys_pressed[pygame.K_DOWN] and (hero.y + hero.height < ROWS - 1) and (objects[hero.y + hero.height][hero.x] == -1): # move down
             if hero.movey == 0:
@@ -224,7 +254,7 @@ def main():
         #hero move
         keys_pressed = pygame.key.get_pressed()
         #hero.movex, hero.movey = 0, 0
-        if time == 7:
+        if time == 6:
             WIN.blit(hero.img, ((hero.x + 0.5 * hero.movex - scroll_x) * TILE_SIZE, (hero.y + 0.5 * hero.movey -scroll_y) * TILE_SIZE))
             hero.y += hero.movey
             hero.x += hero.movex
@@ -238,7 +268,7 @@ def main():
                 hero.img = hero_up
             hero.movey = 0
             hero.movex = 0
-        elif time >= 14:
+        elif time >= 12:
             if hero_move(keys_pressed, hero):
                 time = 0
             WIN.blit(hero.img, ((hero.x - scroll_x) * TILE_SIZE, (hero.y - scroll_y) * TILE_SIZE))
